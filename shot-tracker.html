@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shot Tracker - PGA Tour Companion</title>
+  <!-- Base href for GitHub Pages under /pgacompanion/ -->
+  <base href="/pgacompanion/">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-green-800">PGA Tour Companion</h1>
+      <nav>
+        <ul class="flex space-x-6 text-gray-700">
+          <li><a href="index.html" class="hover:text-green-800">Leaderboard</a></li>
+          <li><a href="shot-lookup.html" class="font-semibold hover:text-green-800">Shot Tracker</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-6 py-8 flex-grow">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Shot Tracker</h2>
+      <p class="text-gray-600 mb-6">Select a hole to see all players currently on it, their distance to the pin, and shot difficulty.</p>
+
+      <!-- Course Holes Grid -->
+      <section class="mb-6">
+        <h3 class="text-lg font-medium text-gray-800 mb-2">Course Holes</h3>
+        <div id="hole-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-6">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+      <!-- Hole Selector -->
+      <div class="mb-6 w-full sm:w-1/2">
+        <label for="hole-select" class="block text-gray-700 font-medium mb-2">Hole Number</label>
+        <select id="hole-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 p-2">
+          <option value="">-- Choose Hole --</option>
+          <!-- Options 1–18 populated by JS -->
+        </select>
+      </div>
+
+      <!-- Results Table -->
+      <div id="tracker-results" class="hidden">
+        <table class="min-w-full text-left bg-white rounded-lg overflow-hidden">
+          <thead class="bg-green-800 text-white">
+            <tr>
+              <th class="px-4 py-2">Player</th>
+              <th class="px-4 py-2">Distance to Pin</th>
+              <th class="px-4 py-2">Difficulty</th>
+            </tr>
+          </thead>
+          <tbody id="results-body" class="divide-y">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t py-4">
+    <div class="container mx-auto px-6 text-center text-gray-600 text-sm">
+      &copy; 2025 PGA Tour Companion. Data for informational purposes only.
+    </div>
+  </footer>
+
+  <!-- JS -->
+  <script>
+    let courseData = null;
+    let leaderboard = [];
+
+    async function init() {
+      // Load course data
+      const courseRes = await fetch('data/colonial-country-club.json');
+      courseData = await courseRes.json();
+
+      // Fetch live leaderboard
+      const apiRes = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
+      const apiJson = await apiRes.json();
+      leaderboard = apiJson.leaderboard.players;
+
+      // Hook selector
+      document.getElementById('hole-select').addEventListener('change', showHole);
+    }
+
+    function showHole() {
+      const hole = parseInt(document.getElementById('hole-select').value, 10);
+      const resultsBody = document.getElementById('results-body');
+      resultsBody.innerHTML = '';
+
+      if (!hole) {
+        document.getElementById('tracker-results').classList.add('hidden');
+        return;
+      }
+
+      // Filter players on selected hole
+      const onHole = leaderboard.filter(p => p.current?.hole === hole);
+
+      onHole.forEach(p => {
+        const dist = p.current.distance_to_hole;
+        const holeInfo = courseData.holes.find(h=>h.number===hole) || {};
+        let diff = '--';
+        if (holeInfo.yardage && dist != null) {
+          const ratio = dist / holeInfo.yardage;
+          diff = ratio > 0.75 ? 'Hard' : ratio > 0.4 ? 'Medium' : 'Easy';
+        }
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-100';
+        row.innerHTML = `
+          <td class="px-4 py-3 text-sm">${p.player_bio.first_name} ${p.player_bio.last_name}</td>
+          <td class="px-4 py-3 text-sm">${dist != null ? dist + ' yds' : '--'}</td>
+          <td class="px-4 py-3 text-sm">${diff}</td>
+        `;
+        resultsBody.appendChild(row);
+      });
+
+      document.getElementById('tracker-results').classList.remove('hidden');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
