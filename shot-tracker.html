@@ -10,11 +10,28 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Flip card styles */
-    .flip-card { perspective: 1000px; }
-    .flip-inner { transform-style: preserve-3d; transition: transform 0.6s; }
-    .flip-card:hover .flip-inner { transform: rotateY(180deg); }
-    .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
-    .flip-back { transform: rotateY(180deg); }
+    .flip-card {
+      perspective: 1000px;
+    }
+    .flip-inner {
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+    }
+    .flip-card:hover .flip-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-front,
+    .flip-back {
+      backface-visibility: hidden;
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+    }
+    .flip-back {
+      transform: rotateY(180deg);
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -35,13 +52,13 @@
   <main class="container mx-auto px-6 py-8 flex-grow">
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-semibold text-gray-800 mb-4">Shot Tracker</h2>
-      <p class="text-gray-600 mb-6">Click a hole below to see all players on it with distance and difficulty.</p>
+      <p class="text-gray-600 mb-6">Hover over or click a hole below to explore its details, then view players on that hole with their distance and shot difficulty.</p>
 
       <!-- Course Holes Grid -->
       <section class="mb-8">
         <h3 class="text-lg font-medium text-gray-800 mb-4">Course Holes</h3>
         <div id="hole-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-          <!-- JS populates interactive flip cards -->
+          <!-- Populated by JS -->
         </div>
       </section>
 
@@ -84,7 +101,7 @@
 
     async function init() {
       try {
-        // Load course JSON
+        // Load course data
         const res = await fetch('data/colonial-country-club.json');
         courseData = await res.json();
 
@@ -104,6 +121,7 @@
                 <div class="text-sm text-gray-600">${h.yardage} yds</div>
               </div>
             </div>`;
+          // Hover rotates card; click triggers detail
           card.addEventListener('click', () => showHole(h.number));
           grid.appendChild(card);
         });
@@ -113,7 +131,7 @@
         const json = await api.json();
         leaderboard = json.leaderboard.players;
       } catch (e) {
-        console.error('Init error', e);
+        console.error('Initialization error:', e);
       }
     }
 
