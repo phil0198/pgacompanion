@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PGA Tour Watching Companion</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-green-800">PGA Tour Companion</h1>
+      <nav>
+        <ul class="flex space-x-6 text-gray-700">
+          <li><a href="/" class="font-semibold hover:text-green-800">Leaderboard</a></li>
+          <li><a href="/shot-lookup.html" class="hover:text-green-800">Shot Lookup</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Leaderboard Section -->
+  <main class="container mx-auto px-6 py-8 flex-grow">
+    <div class="bg-white rounded-lg shadow overflow-x-auto">
+      <div class="px-6 py-4 border-b">
+        <h2 class="text-xl font-semibold text-gray-800">Charles Schwab Challenge 2025 Leaderboard</h2>
+        <p class="text-gray-600">May 19 - May 25, Colonial Country Club</p>
+      </div>
+      <table class="min-w-full text-left">
+        <thead class="bg-green-800 text-white">
+          <tr>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Player</th>
+            <th class="px-4 py-2">Country</th>
+            <th class="px-4 py-2">R1</th>
+            <th class="px-4 py-2">R2</th>
+            <th class="px-4 py-2">R3</th>
+            <th class="px-4 py-2">R4</th>
+            <th class="px-4 py-2">Total</th>
+            <th class="px-4 py-2">To Par</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y">
+          <tr class="bg-gray-50 hover:bg-gray-100">
+            <td class="px-4 py-3">1</td>
+            <td class="px-4 py-3">Scottie Scheffler</td>
+            <td class="px-4 py-3">USA</td>
+            <td class="px-4 py-3">67</td>
+            <td class="px-4 py-3">65</td>
+            <td class="px-4 py-3">68</td>
+            <td class="px-4 py-3">66</td>
+            <td class="px-4 py-3">266</td>
+            <td class="px-4 py-3">-18</td>
+          </tr>
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-3">2</td>
+            <td class="px-4 py-3">Rory McIlroy</td>
+            <td class="px-4 py-3">NIR</td>
+            <td class="px-4 py-3">68</td>
+            <td class="px-4 py-3">66</td>
+            <td class="px-4 py-3">67</td>
+            <td class="px-4 py-3">66</td>
+            <td class="px-4 py-3">267</td>
+            <td class="px-4 py-3">-17</td>
+          </tr>
+          <tr class="bg-gray-50 hover:bg-gray-100">
+            <td class="px-4 py-3">3</td>
+            <td class="px-4 py-3">Jon Rahm</td>
+            <td class="px-4 py-3">ESP</td>
+            <td class="px-4 py-3">69</td>
+            <td class="px-4 py-3">67</td>
+            <td class="px-4 py-3">68</td>
+            <td class="px-4 py-3">65</td>
+            <td class="px-4 py-3">269</td>
+            <td class="px-4 py-3">-15</td>
+          </tr>
+          <!-- Additional rows as needed -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t py-4">
+    <div class="container mx-auto px-6 text-center text-gray-600 text-sm">
+      &copy; 2025 PGA Tour Companion. Data for informational purposes only.
+    </div>
+  </footer>
+</body>
+</html>
