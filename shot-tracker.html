@@ -81,13 +81,33 @@
       const courseRes = await fetch('data/colonial-country-club.json');
       courseData = await courseRes.json();
 
+      // Populate hole selector and grid
+      const select = document.getElementById('hole-select');
+      const grid = document.getElementById('hole-grid');
+      courseData.holes.forEach(hole => {
+        // Option in dropdown
+        const opt = document.createElement('option');
+        opt.value = hole.number;
+        opt.textContent = `Hole ${hole.number} (Par ${hole.par}, ${hole.yardage} yds)`;
+        select.appendChild(opt);
+        // Card in grid
+        const card = document.createElement('div');
+        card.className = 'p-4 border rounded-lg text-center cursor-pointer hover:bg-gray-100';
+        card.innerHTML = `<div class="font-semibold">Hole ${hole.number}</div><div class="text-sm text-gray-600">Par ${hole.par}<br/>${hole.yardage} yds</div>`;
+        card.addEventListener('click', () => {
+          select.value = hole.number;
+          showHole();
+        });
+        grid.appendChild(card);
+      });
+
       // Fetch live leaderboard
       const apiRes = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
       const apiJson = await apiRes.json();
       leaderboard = apiJson.leaderboard.players;
 
-      // Hook selector
-      document.getElementById('hole-select').addEventListener('change', showHole);
+      // Hook selector change
+      select.addEventListener('change', showHole);
     }
 
     function showHole() {
