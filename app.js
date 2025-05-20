@@ -2,7 +2,7 @@
 
 let courseData = null;
 
-// Load Chart.js dynamically if needed
+// Load Chart.js dynamically
 function loadChartJs(callback) {
   if (window.Chart) return callback();
   const script = document.createElement('script');
@@ -11,126 +11,123 @@ function loadChartJs(callback) {
   document.head.appendChild(script);
 }
 
-// Initialize once DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  // Fetch course data (ensure this path matches your JSON location)
-  fetch('/data/colonial-country-club.json')
-    .then(res => res.json())
-    .then(json => {
-      courseData = json;
-    })
-    .catch(err => console.error('Error loading course data:', err));
+// Initialize on DOM ready
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    // Load local course data
+    const courseRes = await fetch('data/colonial-country-club.json');
+    courseData = await courseRes.json();
 
-  // Form submission handler
-  const form = document.getElementById('lookup-form');
-  form.addEventListener('submit', handleLookup);
+    // Fetch live leaderboard
+    const apiRes = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
+    const apiJson = await apiRes.json();
+    const players = apiJson.leaderboard.players;
 
-  // Map click handler: assumes SVG holes have data-hole attributes
-  const mapContainer = document.getElementById('course-map');
-  mapContainer.addEventListener('click', e => {
-    const hole = e.target.dataset && e.target.dataset.hole;
-    if (hole) {
-      document.getElementById('hole-number').value = hole;
-      document.getElementById('distance').focus();
-    }
-  });
+    // Populate player list
+    const list = document.getElementById('players-list');
+    list.innerHTML = '';
+    players.forEach(player => {
+      const btn = document.createElement('button');
+      btn.textContent = `${player.player_bio.last_name}, ${player.player_bio.first_name}`;
+      btn.className = 'bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-full';
+      btn.addEventListener('click', () => showPlayerShot(player));
+      list.appendChild(btn);
+    });
+  } catch (err) {
+    console.error('Initialization error:', err);
+  }
 });
 
-function handleLookup(event) {
-  event.preventDefault();
-  if (!courseData) {
-    alert('Course data not loaded. Please try again later.');
-    return;
-  }
+function showPlayerShot(player) {
+  // Hide any schedule placeholder
+  document.getElementById('schedule-placeholder')?.classList.add('hidden');
 
-  const holeNum = parseInt(document.getElementById('hole-number').value, 10);
-  const distance = parseInt(document.getElementById('distance').value, 10);
-  const lie = document.getElementById('lie-type').value;
+  // Reveal result section
+  const result = document.getElementById('result');
+  result.classList.remove('hidden');
 
-  const holeInfo = courseData.holes.find(h => h.number === holeNum);
-  if (!holeInfo) {
-    alert('Invalid hole number.');
-    return;
-  }
+  // Extract live data
+  const holeNum = player.current.hole || player.current_hole;
+  const distance = player.current.distance_to_hole || player.distance_to_hole;
 
-  // Compute shot difficulty
-  const ratio = distance / holeInfo.yardage;
-  let difficulty;
-  if (lie === 'bunker' || ratio > 0.75) {
-    difficulty = 'Hard';
-  } else if (ratio > 0.4 || lie === 'rough') {
-    difficulty = 'Medium';
-  } else {
-    difficulty = 'Easy';
-  }
+  // Lookup hole info
+  const holeInfo = courseData.holes.find(h => h.number === holeNum) || {};
 
-  // Populate summary panel
+  // Populate summary fields
+  document.getElementById('res-player').textContent = `${player.player_bio.first_name} ${player.player_bio.last_name}`;
   document.getElementById('res-hole').textContent = holeNum;
-  document.getElementById('res-par').textContent = holeInfo.par;
-  document.getElementById('res-yardage').textContent = holeInfo.yardage;
-  document.getElementById('res-lie').textContent = lie.charAt(0).toUpperCase() + lie.slice(1);
+  document.getElementById('res-par').textContent = holeInfo.par || '--';
+  document.getElementById('res-yardage').textContent = holeInfo.yardage || '--';
   document.getElementById('res-distance').textContent = distance;
+
+  // Compute difficulty
+  let difficulty = 'Unknown';
+  if (holeInfo.yardage) {
+    const ratio = distance / holeInfo.yardage;
+    difficulty = ratio > 0.75 ? 'Hard' : ratio > 0.4 ? 'Medium' : 'Easy';
+  }
   document.getElementById('res-difficulty').textContent = difficulty;
 
-  // Populate club usage table
-  const clubTable = document.getElementById('res-club-table');
-  clubTable.innerHTML = '';
-  if (holeInfo.proStats && holeInfo.proStats.clubs) {
+  // Update hole map image (assumes named images)
+  const imgEl = document.getElementById('hole-image');
+  imgEl.src = `images/colonial/hole${holeNum}.png`;
+  imgEl.alt = `Hole ${holeNum} map`;
+
+  // Populate club usage
+  const clubTbody = document.getElementById('res-club-table');
+  clubTbody.innerHTML = '';
+  if (holeInfo.proStats?.clubs) {
     holeInfo.proStats.clubs.forEach(c => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="px-2 py-1 text-sm">${c.club}</td>
         <td class="px-2 py-1 text-sm">${c.usage}%</td>
-        <td class="px-2 py-1 text-sm">${c.avgProProx} yds</td>
+        <td class="px-2 py-1 text-sm">${c.avgProProx}</td>
       `;
-      clubTable.appendChild(tr);
+      clubTbody.appendChild(tr);
     });
   } else {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="3" class="px-2 py-1 text-sm text-gray-500">No pro club data available.</td>`;
-    clubTable.appendChild(tr);
+    tr.innerHTML = '<td colspan="3" class="px-2 py-1 text-center text-gray-500">No club data available</td>';
+    clubTbody.appendChild(tr);
   }
 
-  // Render shot shape distribution chart
+  // Load and render charts
   loadChartJs(() => {
+    // Shot shape pie
     const shapeCtx = document.getElementById('shape-chart').getContext('2d');
-    if (holeInfo.proStats && holeInfo.proStats.shotShapes) {
+    if (holeInfo.proStats?.shotShapes) {
       new Chart(shapeCtx, {
         type: 'pie',
         data: {
           labels: Object.keys(holeInfo.proStats.shotShapes),
-          datasets: [{
-            data: Object.values(holeInfo.proStats.shotShapes)
-          }]
+          datasets: [{ data: Object.values(holeInfo.proStats.shotShapes) }]
         },
         options: { responsive: true }
       });
     } else {
-      shapeCtx.canvas.parentNode.innerHTML = '<p class="text-gray-500">No shot shape data available.</p>';
+      shapeCtx.canvas.parentNode.innerHTML = '<p class="text-gray-500 p-4">No shot shape data</p>';
     }
 
-    // Render dispersion chart or display std dev
+    // Dispersion bar or std dev
     const dispDiv = document.getElementById('dispersion-chart');
     dispDiv.innerHTML = '';
-    if (holeInfo.proStats && Array.isArray(holeInfo.proStats.dispersionData)) {
-      const dispCanvas = document.createElement('canvas');
-      dispDiv.appendChild(dispCanvas);
-      const dispCtx = dispCanvas.getContext('2d');
+    if (Array.isArray(holeInfo.proStats?.dispersionData)) {
+      const canvas = document.createElement('canvas');
+      dispDiv.appendChild(canvas);
+      const dispCtx = canvas.getContext('2d');
       new Chart(dispCtx, {
         type: 'bar',
         data: {
-          labels: holeInfo.proStats.dispersionData.map(d => d.distance),
+          labels: holeInfo.proStats.dispersionData.map(d => d.dist),
           datasets: [{ label: 'Count', data: holeInfo.proStats.dispersionData.map(d => d.count) }]
         },
         options: { responsive: true }
       });
-    } else if (holeInfo.proStats && holeInfo.proStats.dispersion != null) {
-      dispDiv.textContent = `Std Dev: ${holeInfo.proStats.dispersion} yds`;
+    } else if (holeInfo.proStats?.dispersion != null) {
+      dispDiv.textContent = `Std Dev: ${holeInfo.proStats.dispersion} yards`;
     } else {
-      dispDiv.textContent = 'No dispersion data available.';
+      dispDiv.textContent = 'No dispersion data';
     }
   });
-
-  // Show results
-  document.getElementById('result').classList.remove('hidden');
 }
