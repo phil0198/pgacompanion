@@ -10,28 +10,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     /* Flip card styles */
-    .flip-card {
-      perspective: 1000px;
-    }
-    .flip-inner {
-      transform-style: preserve-3d;
-      transition: transform 0.6s;
-    }
-    .flip-card:hover .flip-inner {
-      transform: rotateY(180deg);
-    }
-    .flip-front,
-    .flip-back {
-      backface-visibility: hidden;
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      top: 0;
-      left: 0;
-    }
-    .flip-back {
-      transform: rotateY(180deg);
-    }
+    .flip-card { perspective: 1000px; }
+    .flip-inner { transform-style: preserve-3d; transition: transform 0.6s; position: relative; }
+    .flip-card:hover .flip-inner { transform: rotateY(180deg); }
+    .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; top: 0; left: 0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+    .flip-back { transform: rotateY(180deg); }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -52,7 +35,7 @@
   <main class="container mx-auto px-6 py-8 flex-grow">
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-semibold text-gray-800 mb-4">Shot Tracker</h2>
-      <p class="text-gray-600 mb-6">Hover over or click a hole below to explore its details, then view players on that hole with their distance and shot difficulty.</p>
+      <p class="text-gray-600 mb-6">Click a hole card below to view that hole’s map and see who’s playing it.</p>
 
       <!-- Course Holes Grid -->
       <section class="mb-8">
@@ -65,8 +48,9 @@
       <!-- Hole Detail & Results -->
       <section id="tracking-detail" class="hidden space-y-6">
         <div id="hole-detail" class="mb-6">
-          <h3 class="text-xl font-semibold text-gray-800">Hole <span id="selected-hole"></span> Map</h3>
-          <img id="hole-map-large" src="" alt="Hole Map" class="w-full rounded-lg shadow-lg" />
+          <h3 class="text-xl font-semibold text-gray-800">Hole <span id="selected-hole"></span> Details</h3>
+          <img id="hole-map-large" src="" alt="Hole Map" class="w-full rounded-lg shadow-lg mb-4" />
+          <p class="text-gray-700"><strong>Par:</strong> <span id="detail-par"></span>, <strong>Yardage:</strong> <span id="detail-yardage"></span> yds</p>
         </div>
         <div id="tracker-results">
           <h3 class="text-lg font-medium text-gray-800 mb-2">Players on This Hole</h3>
@@ -105,28 +89,28 @@
         const res = await fetch('data/colonial-country-club.json');
         courseData = await res.json();
 
-        // Populate hole grid with flip cards
+        // Populate hole grid
         const grid = document.getElementById('hole-grid');
         courseData.holes.forEach(h => {
           const card = document.createElement('div');
-          card.className = 'flip-card relative h-48 bg-gray-100 rounded-lg shadow-lg overflow-hidden';
-          card.innerHTML = `
-            <div class="flip-inner relative w-full h-full">
-              <div class="flip-front absolute p-4 flex flex-col items-center justify-center">
-                <img src="images/colonial/hole${h.number}.png" alt="Hole ${h.number}" class="w-full h-24 object-cover rounded mb-2" />
-                <div class="font-semibold">Hole ${h.number}</div>
-              </div>
-              <div class="flip-back absolute p-4 flex flex-col items-center justify-center bg-white">
-                <div class="font-semibold">Par ${h.par}</div>
-                <div class="text-sm text-gray-600">${h.yardage} yds</div>
-              </div>
+          card.className = 'flip-card h-48 bg-gray-100 rounded-lg shadow-lg overflow-hidden relative cursor-pointer';
+          // Front and back
+          const inner = document.createElement('div');
+          inner.className = 'flip-inner w-full h-full';
+          inner.innerHTML = `
+            <div class="flip-front bg-white p-4">
+              <div class="text-2xl font-bold">Hole ${h.number}</div>
+            </div>
+            <div class="flip-back bg-green-50 p-4">
+              <div class="text-lg font-semibold">Par ${h.par}</div>
+              <div class="text-sm text-gray-600">${h.yardage} yds</div>
             </div>`;
-          // Hover rotates card; click triggers detail
-          card.addEventListener('click', () => showHole(h.number));
+          card.appendChild(inner);
+          card.addEventListener('click', () => showHole(h));
           grid.appendChild(card);
         });
 
-        // Fetch live leaderboard data
+        // Fetch live leaderboard
         const api = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
         const json = await api.json();
         leaderboard = json.leaderboard.players;
@@ -136,20 +120,20 @@
     }
 
     function showHole(hole) {
-      document.getElementById('selected-hole').textContent = hole;
-      const mapImg = document.getElementById('hole-map-large');
-      mapImg.src = `images/colonial/hole${hole}.png`;
-      mapImg.alt = `Hole ${hole} map`;
+      document.getElementById('selected-hole').textContent = hole.number;
+      document.getElementById('detail-par').textContent = hole.par;
+      document.getElementById('detail-yardage').textContent = hole.yardage;
+      document.getElementById('hole-map-large').src = `images/colonial/hole${hole.number}.png`;
+      document.getElementById('hole-map-large').alt = `Hole ${hole.number} map`;
       document.getElementById('tracking-detail').classList.remove('hidden');
 
       // Populate players table
-      const playersOnHole = leaderboard.filter(p => p.current?.hole === hole);
+      const playersOnHole = leaderboard.filter(p => p.current?.hole === hole.number);
       const rows = playersOnHole.map(p => {
         const dist = p.current.distance_to_hole;
-        const holeInfo = courseData.holes.find(h => h.number === hole) || {};
         let diff = '--';
-        if (holeInfo.yardage && dist != null) {
-          const ratio = dist / holeInfo.yardage;
+        if (hole.yardage && dist != null) {
+          const ratio = dist / hole.yardage;
           diff = ratio > 0.75 ? 'Hard' : ratio > 0.4 ? 'Medium' : 'Easy';
         }
         return `
