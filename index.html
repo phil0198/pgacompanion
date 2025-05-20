@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PGA Tour Watching Companion</title>
+  <title>PGA Tour Companion</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -21,9 +21,24 @@
     </div>
   </header>
 
-  <!-- Leaderboard Section -->
+  <!-- Main Content -->
   <main class="container mx-auto px-6 py-8 flex-grow">
-    <div class="bg-white rounded-lg shadow overflow-x-auto">
+    <!-- Schedule Placeholder -->
+    <div id="schedule-placeholder" class="bg-white rounded-lg shadow p-6 text-center">
+      <h2 class="text-xl font-semibold mb-2">Charles Schwab Challenge 2025</h2>
+      <p class="text-gray-600 mb-4">Starts May 19, 2025 at Colonial Country Club</p>
+      <p class="mb-4">Check back then for live scoring!</p>
+      <h3 class="font-semibold text-gray-800 mb-2">Tee Times (May 19)</h3>
+      <ul class="mt-2 list-disc list-inside text-left max-w-md mx-auto text-gray-700">
+        <li>7:00 AM – Group 1: Scottie Scheffler, Rory McIlroy, Jon Rahm</li>
+        <li>7:08 AM – Group 2: Xander Schauffele, Patrick Cantlay, Jordan Spieth</li>
+        <li>7:16 AM – Group 3: Viktor Hovland, Tony Finau, Brooks Koepka</li>
+        <!-- Add more as needed -->
+      </ul>
+    </div>
+
+    <!-- Leaderboard Table (Hidden until start) -->
+    <div id="leaderboard-container" class="hidden mt-6 bg-white rounded-lg shadow overflow-x-auto">
       <div class="px-6 py-4 border-b">
         <h2 class="text-xl font-semibold text-gray-800">Charles Schwab Challenge 2025 Leaderboard</h2>
         <p class="text-gray-600">May 19 - May 25, Colonial Country Club</p>
@@ -42,41 +57,8 @@
             <th class="px-4 py-2">To Par</th>
           </tr>
         </thead>
-        <tbody class="divide-y">
-          <tr class="bg-gray-50 hover:bg-gray-100">
-            <td class="px-4 py-3">1</td>
-            <td class="px-4 py-3">Scottie Scheffler</td>
-            <td class="px-4 py-3">USA</td>
-            <td class="px-4 py-3">67</td>
-            <td class="px-4 py-3">65</td>
-            <td class="px-4 py-3">68</td>
-            <td class="px-4 py-3">66</td>
-            <td class="px-4 py-3">266</td>
-            <td class="px-4 py-3">-18</td>
-          </tr>
-          <tr class="hover:bg-gray-100">
-            <td class="px-4 py-3">2</td>
-            <td class="px-4 py-3">Rory McIlroy</td>
-            <td class="px-4 py-3">NIR</td>
-            <td class="px-4 py-3">68</td>
-            <td class="px-4 py-3">66</td>
-            <td class="px-4 py-3">67</td>
-            <td class="px-4 py-3">66</td>
-            <td class="px-4 py-3">267</td>
-            <td class="px-4 py-3">-17</td>
-          </tr>
-          <tr class="bg-gray-50 hover:bg-gray-100">
-            <td class="px-4 py-3">3</td>
-            <td class="px-4 py-3">Jon Rahm</td>
-            <td class="px-4 py-3">ESP</td>
-            <td class="px-4 py-3">69</td>
-            <td class="px-4 py-3">67</td>
-            <td class="px-4 py-3">68</td>
-            <td class="px-4 py-3">65</td>
-            <td class="px-4 py-3">269</td>
-            <td class="px-4 py-3">-15</td>
-          </tr>
-          <!-- Additional rows as needed -->
+        <tbody id="leaderboard-body" class="divide-y">
+          <!-- Populated dynamically -->
         </tbody>
       </table>
     </div>
@@ -88,5 +70,55 @@
       &copy; 2025 PGA Tour Companion. Data for informational purposes only.
     </div>
   </footer>
+
+  <!-- Inline Script to toggle views and fetch live data -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const startDate = new Date('2025-05-19T07:00:00Z');
+      const now = new Date();
+      const schedule = document.getElementById('schedule-placeholder');
+      const leaderboardContainer = document.getElementById('leaderboard-container');
+      const leaderboardBody = document.getElementById('leaderboard-body');
+
+      if (now >= startDate) {
+        schedule.classList.add('hidden');
+        leaderboardContainer.classList.remove('hidden');
+
+        // Fetch live leaderboard from PGA Tour API
+        fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json')
+          .then(response => response.json())
+          .then(data => {
+            const players = data.leaderboard.players;
+            leaderboardBody.innerHTML = '';
+            players.forEach(player => {
+              const row = document.createElement('tr');
+              row.className = 'hover:bg-gray-100';
+              const cols = [
+                player.position,
+                player.player_bio.last_name + ', ' + player.player_bio.first_name,
+                player.player_bio.country,
+                player.round1 || '--',
+                player.round2 || '--',
+                player.round3 || '--',
+                player.round4 || '--',
+                player.total,
+                player.to_par
+              ];
+              cols.forEach((text, i) => {
+                const cell = document.createElement('td');
+                cell.className = 'px-4 py-3 text-sm';
+                cell.textContent = text;
+                row.appendChild(cell);
+              });
+              leaderboardBody.appendChild(row);
+            });
+          })
+          .catch(err => {
+            console.error('Error fetching leaderboard:', err);
+            leaderboardBody.innerHTML = '<tr><td colspan="9" class="px-4 py-3 text-center text-gray-500">Unable to load live leaderboard.</td></tr>';
+          });
+      }
+    });
+  </script>
 </body>
 </html>
