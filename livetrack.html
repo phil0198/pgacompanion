@@ -1,1 +1,132 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shot Lookup - PGA Tour Companion</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <!-- Navbar -->
+  <header class="bg-white shadow">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-bold text-green-800">PGA Tour Companion</h1>
+      <nav>
+        <ul class="flex space-x-6 text-gray-700">
+          <li><a href="/" class="hover:text-green-800">Leaderboard</a></li>
+          <li><a href="/shot-lookup.html" class="font-semibold hover:text-green-800">Shot Lookup</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Shot Lookup Section -->
+  <main class="container mx-auto px-6 py-8 flex-grow">
+    <div class="bg-white rounded-lg shadow p-6">
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Detailed Shot Lookup</h2>
+      <p class="text-gray-600 mb-6">Enter hole number or click on the map, then specify distance from the pin to get pro-level insights.</p>
+
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Input Form -->
+        <div class="w-full lg:w-1/3">
+          <form id="lookup-form" class="space-y-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+            <div>
+              <label for="hole-number" class="block text-gray-700 font-medium">Hole Number</label>
+              <input type="number" id="hole-number" name="hole" min="1" max="18" required
+                class="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" />
+            </div>
+            <div>
+              <label for="distance" class="block text-gray-700 font-medium">Distance to Pin (yards)</label>
+              <input type="number" id="distance" name="distance" min="1" required
+                class="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring focus:ring-green-200" />
+            </div>
+            <div>
+              <label for="lie-type" class="block text-gray-700 font-medium">Lie Type</label>
+              <select id="lie-type" name="lie" class="mt-1 w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring focus:ring-green-200">
+                <option value="fairway">Fairway</option>
+                <option value="rough">Rough</option>
+                <option value="bunker">Bunker</option>
+                <option value="tee">Tee</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <button type="submit"
+              class="w-full bg-green-700 text-white py-2 rounded-lg font-medium hover:bg-green-600 transition">
+              Get Shot Info
+            </button>
+          </form>
+        </div>
+
+        <!-- Course Map & Interaction -->
+        <div class="w-full lg:w-2/3">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Course Map</h3>
+          <div id="course-map" class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+            <!-- SVG map will be injected here -->
+            <span>Interactive SVG Map Placeholder</span>
+          </div>
+          <p class="text-sm text-gray-500 mt-2">Click on a hole on the map to pre-fill the hole number.</p>
+        </div>
+      </div>
+
+      <!-- Detailed Results -->
+      <div id="result" class="mt-8 hidden">
+        <h3 class="text-xl font-semibold text-gray-800 mb-4">Shot Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Summary Panel -->
+          <div class="space-y-2">
+            <p><strong>Hole:</strong> <span id="res-hole"></span> (<span id="res-par"></span>-par, <span id="res-yardage"></span> yards)</p>
+            <p><strong>Lie:</strong> <span id="res-lie"></span></p>
+            <p><strong>Distance to Pin:</strong> <span id="res-distance"></span> yards</p>
+            <p><strong>Shot Difficulty:</strong> <span id="res-difficulty"></span></p>
+          </div>
+
+          <!-- Club Usage Table -->
+          <div>
+            <h4 class="font-medium text-gray-800">Pro Club Usage</h4>
+            <table class="w-full text-left mt-2 border-collapse">
+              <thead>
+                <tr class="bg-gray-100">
+                  <th class="px-2 py-1 text-sm">Club</th>
+                  <th class="px-2 py-1 text-sm">Usage %</th>
+                  <th class="px-2 py-1 text-sm">Avg Pro Prox. (yd)</th>
+                </tr>
+              </thead>
+              <tbody id="res-club-table" class="divide-y">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Shot Shape Chart -->
+          <div>
+            <h4 class="font-medium text-gray-800">Shot Shape Distribution</h4>
+            <canvas id="shape-chart" class="mt-2 bg-white rounded-lg p-2"></canvas>
+          </div>
+
+          <!-- Yardage Dispersion -->
+          <div class="md:col-span-2">
+            <h4 class="font-medium text-gray-800">Yardage Dispersion (Pro Average)</h4>
+            <p class="text-sm text-gray-600 mb-2">Standard deviation of pro approach distances.</p>
+            <div id="dispersion-chart" class="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
+              <!-- Chart placeholder -->
+              <span>Dispersion Chart Placeholder</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t py-4">
+    <div class="container mx-auto px-6 text-center text-gray-600 text-sm">
+      &copy; 2025 PGA Tour Companion. Data for informational purposes only.
+    </div>
+  </footer>
+
+  <!-- JS Bundle -->
+  <script src="/app.js"></script>
+</body>
+</html>
