@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Shot Lookup - PGA Tour Companion</title>
+  <!-- Ensure paths resolve under /photo-editor/ on GitHub Pages -->
+  <base href="/pgacompanion/">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -28,15 +30,15 @@
       <p class="text-gray-600">Click a player below to see their current hole, map location, distance to pin, and shot difficulty.</p>
 
       <!-- Players List -->
-      <div>
+      <section>
         <h3 class="text-lg font-medium text-gray-800 mb-2">Players on Course</h3>
         <div id="players-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
           <!-- Populated dynamically by app.js -->
         </div>
-      </div>
+      </section>
 
       <!-- Shot Details -->
-      <div id="result" class="hidden space-y-6">
+      <section id="result" class="hidden space-y-6">
         <h3 class="text-xl font-semibold text-gray-800">Player Shot Details</h3>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <!-- Map & Hole Image -->
@@ -49,16 +51,16 @@
           <!-- Summary & Stats -->
           <div class="space-y-3">
             <p><strong>Player:</strong> <span id="res-player"></span></p>
-            <p><strong>Hole:</strong> <span id="res-hole"></span> (<span id="res-par"></span>-par, <span id="res-yardage"></span> yards)</p>
-            <p><strong>Distance to Pin:</strong> <span id="res-distance"></span> yards</p>
-            <p><strong>Shot Difficulty:</strong> <span id="res-difficulty"></span></p>
+            <p><strong>Hole:</strong> <span id="res-hole"></span> (<span id="res-par"></span>-par, <span id="res-yardage"></span> yds)</p>
+            <p><strong>Distance:</strong> <span id="res-distance"></span> yards</p>
+            <p><strong>Difficulty:</strong> <span id="res-difficulty"></span></p>
             <h4 class="font-medium text-gray-800 pt-4">Pro Club Usage</h4>
             <table class="w-full text-left mt-2 border-collapse">
               <thead>
                 <tr class="bg-gray-100">
                   <th class="px-2 py-1 text-sm">Club</th>
                   <th class="px-2 py-1 text-sm">Usage %</th>
-                  <th class="px-2 py-1 text-sm">Avg Pro Prox. (yd)</th>
+                  <th class="px-2 py-1 text-sm">Avg Pro Prox.</th>
                 </tr>
               </thead>
               <tbody id="res-club-table" class="divide-y">
@@ -76,12 +78,12 @@
               <h4 class="font-medium text-gray-800">Yardage Dispersion</h4>
               <p class="text-sm text-gray-600 mb-2">Std dev of approach distances</p>
               <div id="dispersion-chart" class="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center text-gray-500">
-                <!-- Chart populated dynamically -->
+                <!-- Chart populated by app.js -->
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   </main>
 
