@@ -8,6 +8,14 @@
   <base href="/pgacompanion/">
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Flip card styles */
+    .flip-card { perspective: 1000px; }
+    .flip-inner { transform-style: preserve-3d; transition: transform 0.6s; }
+    .flip-card:hover .flip-inner { transform: rotateY(180deg); }
+    .flip-front, .flip-back { backface-visibility: hidden; position: absolute; width: 100%; height: 100%; top: 0; left: 0; }
+    .flip-back { transform: rotateY(180deg); }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
   <!-- Navbar -->
@@ -27,40 +35,38 @@
   <main class="container mx-auto px-6 py-8 flex-grow">
     <div class="bg-white rounded-lg shadow p-6">
       <h2 class="text-2xl font-semibold text-gray-800 mb-4">Shot Tracker</h2>
-      <p class="text-gray-600 mb-6">Select a hole to see all players currently on it, their distance to the pin, and shot difficulty.</p>
+      <p class="text-gray-600 mb-6">Click a hole below to see all players on it with distance and difficulty.</p>
 
       <!-- Course Holes Grid -->
-      <section class="mb-6">
-        <h3 class="text-lg font-medium text-gray-800 mb-2">Course Holes</h3>
-        <div id="hole-grid" class="grid grid-cols-3 sm:grid-cols-6 gap-4 mb-6">
-          <!-- Populated by JS -->
+      <section class="mb-8">
+        <h3 class="text-lg font-medium text-gray-800 mb-4">Course Holes</h3>
+        <div id="hole-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <!-- JS populates interactive flip cards -->
         </div>
       </section>
 
-      <!-- Hole Selector -->
-      <div class="mb-6 w-full sm:w-1/2">
-        <label for="hole-select" class="block text-gray-700 font-medium mb-2">Hole Number</label>
-        <select id="hole-select" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring focus:ring-green-200 p-2">
-          <option value="">-- Choose Hole --</option>
-          <!-- Options 1–18 populated by JS -->
-        </select>
-      </div>
-
-      <!-- Results Table -->
-      <div id="tracker-results" class="hidden">
-        <table class="min-w-full text-left bg-white rounded-lg overflow-hidden">
-          <thead class="bg-green-800 text-white">
-            <tr>
-              <th class="px-4 py-2">Player</th>
-              <th class="px-4 py-2">Distance to Pin</th>
-              <th class="px-4 py-2">Difficulty</th>
-            </tr>
-          </thead>
-          <tbody id="results-body" class="divide-y">
-            <!-- Populated by JS -->
-          </tbody>
-        </table>
-      </div>
+      <!-- Hole Detail & Results -->
+      <section id="tracking-detail" class="hidden space-y-6">
+        <div id="hole-detail" class="mb-6">
+          <h3 class="text-xl font-semibold text-gray-800">Hole <span id="selected-hole"></span> Map</h3>
+          <img id="hole-map-large" src="" alt="Hole Map" class="w-full rounded-lg shadow-lg" />
+        </div>
+        <div id="tracker-results">
+          <h3 class="text-lg font-medium text-gray-800 mb-2">Players on This Hole</h3>
+          <table class="min-w-full text-left bg-white rounded-lg overflow-hidden">
+            <thead class="bg-green-800 text-white">
+              <tr>
+                <th class="px-4 py-2">Player</th>
+                <th class="px-4 py-2">Distance</th>
+                <th class="px-4 py-2">Difficulty</th>
+              </tr>
+            </thead>
+            <tbody id="results-body" class="divide-y">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -71,77 +77,71 @@
     </div>
   </footer>
 
-  <!-- JS -->
+  <!-- Inline JS -->
   <script>
     let courseData = null;
     let leaderboard = [];
 
     async function init() {
-      // Load course data
-      const courseRes = await fetch('data/colonial-country-club.json');
-      courseData = await courseRes.json();
+      try {
+        // Load course JSON
+        const res = await fetch('data/colonial-country-club.json');
+        courseData = await res.json();
 
-      // Populate hole selector and grid
-      const select = document.getElementById('hole-select');
-      const grid = document.getElementById('hole-grid');
-      courseData.holes.forEach(hole => {
-        // Option in dropdown
-        const opt = document.createElement('option');
-        opt.value = hole.number;
-        opt.textContent = `Hole ${hole.number} (Par ${hole.par}, ${hole.yardage} yds)`;
-        select.appendChild(opt);
-        // Card in grid
-        const card = document.createElement('div');
-        card.className = 'p-4 border rounded-lg text-center cursor-pointer hover:bg-gray-100';
-        card.innerHTML = `<div class="font-semibold">Hole ${hole.number}</div><div class="text-sm text-gray-600">Par ${hole.par}<br/>${hole.yardage} yds</div>`;
-        card.addEventListener('click', () => {
-          select.value = hole.number;
-          showHole();
+        // Populate hole grid with flip cards
+        const grid = document.getElementById('hole-grid');
+        courseData.holes.forEach(h => {
+          const card = document.createElement('div');
+          card.className = 'flip-card relative h-48 bg-gray-100 rounded-lg shadow-lg overflow-hidden';
+          card.innerHTML = `
+            <div class="flip-inner relative w-full h-full">
+              <div class="flip-front absolute p-4 flex flex-col items-center justify-center">
+                <img src="images/colonial/hole${h.number}.png" alt="Hole ${h.number}" class="w-full h-24 object-cover rounded mb-2" />
+                <div class="font-semibold">Hole ${h.number}</div>
+              </div>
+              <div class="flip-back absolute p-4 flex flex-col items-center justify-center bg-white">
+                <div class="font-semibold">Par ${h.par}</div>
+                <div class="text-sm text-gray-600">${h.yardage} yds</div>
+              </div>
+            </div>`;
+          card.addEventListener('click', () => showHole(h.number));
+          grid.appendChild(card);
         });
-        grid.appendChild(card);
-      });
 
-      // Fetch live leaderboard
-      const apiRes = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
-      const apiJson = await apiRes.json();
-      leaderboard = apiJson.leaderboard.players;
-
-      // Hook selector change
-      select.addEventListener('change', showHole);
+        // Fetch live leaderboard data
+        const api = await fetch('https://statdata.pgatour.com/r/current/leaderboard-v2.json');
+        const json = await api.json();
+        leaderboard = json.leaderboard.players;
+      } catch (e) {
+        console.error('Init error', e);
+      }
     }
 
-    function showHole() {
-      const hole = parseInt(document.getElementById('hole-select').value, 10);
-      const resultsBody = document.getElementById('results-body');
-      resultsBody.innerHTML = '';
+    function showHole(hole) {
+      document.getElementById('selected-hole').textContent = hole;
+      const mapImg = document.getElementById('hole-map-large');
+      mapImg.src = `images/colonial/hole${hole}.png`;
+      mapImg.alt = `Hole ${hole} map`;
+      document.getElementById('tracking-detail').classList.remove('hidden');
 
-      if (!hole) {
-        document.getElementById('tracker-results').classList.add('hidden');
-        return;
-      }
-
-      // Filter players on selected hole
-      const onHole = leaderboard.filter(p => p.current?.hole === hole);
-
-      onHole.forEach(p => {
+      // Populate players table
+      const playersOnHole = leaderboard.filter(p => p.current?.hole === hole);
+      const rows = playersOnHole.map(p => {
         const dist = p.current.distance_to_hole;
-        const holeInfo = courseData.holes.find(h=>h.number===hole) || {};
+        const holeInfo = courseData.holes.find(h => h.number === hole) || {};
         let diff = '--';
         if (holeInfo.yardage && dist != null) {
           const ratio = dist / holeInfo.yardage;
           diff = ratio > 0.75 ? 'Hard' : ratio > 0.4 ? 'Medium' : 'Easy';
         }
-        const row = document.createElement('tr');
-        row.className = 'hover:bg-gray-100';
-        row.innerHTML = `
-          <td class="px-4 py-3 text-sm">${p.player_bio.first_name} ${p.player_bio.last_name}</td>
-          <td class="px-4 py-3 text-sm">${dist != null ? dist + ' yds' : '--'}</td>
-          <td class="px-4 py-3 text-sm">${diff}</td>
-        `;
-        resultsBody.appendChild(row);
+        return `
+          <tr class="hover:bg-gray-100">
+            <td class="px-4 py-2 text-sm">${p.player_bio.first_name} ${p.player_bio.last_name}</td>
+            <td class="px-4 py-2 text-sm">${dist != null ? dist + ' yds' : '--'}</td>
+            <td class="px-4 py-2 text-sm">${diff}</td>
+          </tr>`;
       });
-
-      document.getElementById('tracker-results').classList.remove('hidden');
+      document.getElementById('results-body').innerHTML = rows.join('');
     }
 
     document.addEventListener('DOMContentLoaded', init);
